@@ -1,0 +1,32 @@
+---
+- name: Install PHP and required extensions
+  apt:
+    name:
+      - "php{{ php_version }}"
+      - "php{{ php_version }}-fpm"
+      - "php{{ php_version }}-cli"
+      - "php{{ php_version }}-common"
+      - "php{{ php_version }}-mysql"
+      - "php{{ php_version }}-xml"
+      - "php{{ php_version }}-curl"
+      - "php{{ php_version }}-gd"
+      - "php{{ php_version }}-intl"
+      - "php{{ php_version }}-mbstring"
+      - "php{{ php_version }}-soap"
+      - "php{{ php_version }}-zip"
+      - "php{{ php_version }}-bcmath"
+      - "php{{ php_version }}-opcache"
+    state: present
+    update_cache: yes
+
+- name: Configure PHP settings (fpm)
+  lineinfile:
+    path: "/etc/php/{{ php_version }}/fpm/php.ini"
+    regexp: "^{{ item.key }} ="
+    line: "{{ item.key }} = {{ item.value }}"
+  loop:
+    - { key: "memory_limit", value: "{{ php_memory_limit }}" }
+    - { key: "upload_max_filesize", value: "{{ php_upload_max_filesize }}" }
+    - { key: "post_max_size", value: "{{ php_post_max_size }}" }
+    - { key: "max_execution_time", value: "{{ php_max_execution_time }}" }
+  notify: restart php-fpm

@@ -1,0 +1,37 @@
+# Utilisateur Linux sur les serveurs 
+ansible_user: ubuntu
+
+# Magento paths
+magento_user: magento
+magento_group: www-data
+magento_root: /var/www/magento
+
+# Nginx
+nginx_server_name: "localhost"   # plus tard: notre domaine ou l'ALB DNS
+magento_root: /var/www/magento
+
+# --- Magento (placeholder, à remplacer quand Terraform donnera les infos) ---
+magento_db_host: "127.0.0.1"
+magento_db_name: "magento"
+magento_db_user: "magento"
+magento_db_password: "changeme"
+magento_base_url: "http://localhost/"
+
+# PHP
+php_version: "8.3"       
+php_memory_limit: "2G"
+php_upload_max_filesize: "64M"
+php_post_max_size: "64M"
+php_max_execution_time: "1800"
+
+# Magento install (on ne l’exécute PAS tant que Terraform n’est pas prêt)
+do_magento_install: false
+
+# DB placeholders (Terraform donnera les vraies valeurs)
+db_host: "TO_BE_SET"
+db_name: "magento"
+db_user: "magento"
+db_password: "TO_BE_SET"
+
+# Base URL (Terraform/ALB donnera le vrai)
+magento_base_url: "http://localhost/"

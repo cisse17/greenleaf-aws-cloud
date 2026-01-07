@@ -1,0 +1,31 @@
+---
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Ensure nginx is running
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Create nginx vhost for Magento
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/magento.conf
+  notify: reload nginx
+
+- name: Enable magento site
+  file:
+    src: /etc/nginx/sites-available/magento.conf
+    dest: /etc/nginx/sites-enabled/magento.conf
+    state: link
+  notify: reload nginx
+
+- name: Disable default site if exists
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx

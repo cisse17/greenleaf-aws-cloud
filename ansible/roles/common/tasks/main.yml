@@ -1,0 +1,15 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  apt:
+    name:
+      - curl
+      - unzip
+      - git
+      - ca-certificates
+      - software-properties-common
+    state: present

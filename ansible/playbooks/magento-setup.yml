@@ -1,0 +1,10 @@
+---
+- name: Setup Magento stack
+  hosts: web
+  become: true
+
+  roles:
+    - common
+    - webserver
+    - php
+    - magento
