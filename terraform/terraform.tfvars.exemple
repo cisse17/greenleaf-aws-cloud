@@ -1,0 +1,75 @@
+# ============================================================================
+# TERRAFORM VARIABLES - EXEMPLE DE CONFIGURATION
+# ============================================================================
+# IMPORTANT: Copiez ce fichier en "terraform.tfvars" et modifiez les valeurs
+# Commande: cp terraform.tfvars.example terraform.tfvars
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Configuration Générale
+# ----------------------------------------------------------------------------
+project_name = "greenleaf"
+environment  = "prod"
+aws_region   = "eu-west-3"  # Paris
+
+# ----------------------------------------------------------------------------
+# Configuration Réseau
+# ----------------------------------------------------------------------------
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["eu-west-1a", "eu-west-1b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+
+# ----------------------------------------------------------------------------
+# Configuration EC2
+# ----------------------------------------------------------------------------
+instance_type        = "t3.medium"     # 2 vCPU, 4 GB RAM (~60$/mois)
+key_name             = "greenleaf-key" # NOM DE VOTRE CLÉ SSH (à créer dans AWS Console)
+asg_min_size         = 2
+asg_max_size         = 4
+asg_desired_capacity = 2
+
+# ----------------------------------------------------------------------------
+# Configuration Base de Données
+# ----------------------------------------------------------------------------
+db_instance_class    = "db.t3.medium"  # 2 vCPU, 4 GB RAM (~100$/mois)
+db_allocated_storage = 100             # GB
+db_engine_version    = "8.0.35"
+db_name              = "magento"
+db_username          = "magento_admin"
+db_password          = "CHANGE-ME" # mdp
+db_backup_retention  = 7               # jours
+
+# ----------------------------------------------------------------------------
+# Configuration Sécurité
+# ----------------------------------------------------------------------------
+# ⚠️ IMPORTANT: Remplacez par VOTRE adresse IP publique pour sécuriser l'accès SSH
+# Trouvez votre IP avec: curl ifconfig.me
+allowed_ssh_cidr = ["0.0.0.0/0"]  # ⚠️ À CHANGER ! Exemple: ["203.0.113.0/32"]
+
+# ----------------------------------------------------------------------------
+# Configuration CloudFront
+# ----------------------------------------------------------------------------
+enable_cloudfront = true  # Mettre à false pour économiser des coûts
+
+# ----------------------------------------------------------------------------
+# Configuration Monitoring
+# ----------------------------------------------------------------------------
+alarm_email = "email"  # Email pour les alertes
+
+# ----------------------------------------------------------------------------
+# Configuration FinOps
+# ----------------------------------------------------------------------------
+monthly_budget_limit = 500  # Budget mensuel en USD
+
+# ----------------------------------------------------------------------------
+# Tags Communs
+# ----------------------------------------------------------------------------
+common_tags = {
+  Project     = "GreenLeaf"
+  Environment = "Production"
+  ManagedBy   = "Terraform"
+  Team        = "DevOps-Team"
+  CostCenter  = "E-Commerce"
+  Owner       = "Bassirou & Team devops "
+}
