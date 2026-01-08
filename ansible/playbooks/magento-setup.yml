@@ -16,7 +16,7 @@
     server_locale: fr_FR.UTF-8
     project_name: greenleaf
     magento_root: /var/www/magento
-    php_version: "8.2"
+    php_version: "8.3"
     php_memory_limit: "2G"
     php_max_execution_time: "1800"
     nginx_user: www-data
@@ -315,7 +315,7 @@
     - name: 2.12 - Vérifier que Nginx est actif
       systemd:
         name: nginx
-        state: started
+        state: startd
       register: nginx_status
       tags: nginx
     
@@ -330,3 +330,143 @@
           - "Test : curl http://localhost"
           - "=========================================="
       tags: nginx
+    # ========================================================================
+    # ÉTAPE 3 : INSTALLATION PHP 8.2 ET EXTENSIONS MAGENTO
+    # ========================================================================
+    
+    - name: 3.1 - Installer PHP {{ php_version }} et extensions Magento
+      apt:
+        name:
+          - php{{ php_version }}-fpm
+          - php{{ php_version }}-cli
+          - php{{ php_version }}-common
+          - php{{ php_version }}-mysql
+          - php{{ php_version }}-curl
+          - php{{ php_version }}-gd
+          - php{{ php_version }}-intl
+          - php{{ php_version }}-mbstring
+          - php{{ php_version }}-soap
+          - php{{ php_version }}-xml
+          - php{{ php_version }}-zip
+          - php{{ php_version }}-bcmath
+          - php{{ php_version }}-opcache
+          - php{{ php_version }}-redis
+          - php{{ php_version }}-xsl
+        state: present
+        update_cache: yes
+      tags: php
+    
+    - name: 3.2 - Vérifier la version de PHP
+      command: php -v
+      register: php_version_output
+      changed_when: false
+      tags: php
+    
+    - name: 3.3 - Afficher la version de PHP
+      debug:
+        msg: "{{ php_version_output.stdout_lines }}"
+      tags: php
+    
+    - name: 3.4 - Configurer PHP pour Magento (php.ini CLI)
+      lineinfile:
+        path: /etc/php/{{ php_version }}/cli/php.ini
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^memory_limit', line: 'memory_limit = {{ php_memory_limit }}' }
+        - { regexp: '^max_execution_time', line: 'max_execution_time = {{ php_max_execution_time }}' }
+        - { regexp: '^max_input_time', line: 'max_input_time = 1800' }
+        - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 64M' }
+        - { regexp: '^post_max_size', line: 'post_max_size = 64M' }
+        - { regexp: '^;date.timezone', line: 'date.timezone = Europe/Paris' }
+        - { regexp: '^date.timezone', line: 'date.timezone = Europe/Paris' }
+      tags: php
+    
+    - name: 3.5 - Configurer PHP pour Magento (php.ini FPM)
+      lineinfile:
+        path: /etc/php/{{ php_version }}/fpm/php.ini
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^memory_limit', line: 'memory_limit = {{ php_memory_limit }}' }
+        - { regexp: '^max_execution_time', line: 'max_execution_time = {{ php_max_execution_time }}' }
+        - { regexp: '^max_input_time', line: 'max_input_time = 1800' }
+        - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 64M' }
+        - { regexp: '^post_max_size', line: 'post_max_size = 64M' }
+        - { regexp: '^;date.timezone', line: 'date.timezone = Europe/Paris' }
+        - { regexp: '^date.timezone', line: 'date.timezone = Europe/Paris' }
+        - { regexp: '^;opcache.enable=', line: 'opcache.enable=1' }
+        - { regexp: '^opcache.enable=', line: 'opcache.enable=1' }
+        - { regexp: '^;opcache.memory_consumption', line: 'opcache.memory_consumption=512' }
+        - { regexp: '^opcache.memory_consumption', line: 'opcache.memory_consumption=512' }
+        - { regexp: '^;opcache.max_accelerated_files', line: 'opcache.max_accelerated_files=60000' }
+        - { regexp: '^opcache.max_accelerated_files', line: 'opcache.max_accelerated_files=60000' }
+        - { regexp: '^;opcache.save_comments', line: 'opcache.save_comments=1' }
+        - { regexp: '^opcache.save_comments', line: 'opcache.save_comments=1' }
+      tags: php
+    
+    - name: 3.6 - Configurer le pool PHP-FPM
+      lineinfile:
+        path: /etc/php/{{ php_version }}/fpm/pool.d/www.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^user = ', line: 'user = {{ nginx_user }}' }
+        - { regexp: '^group = ', line: 'group = {{ nginx_user }}' }
+        - { regexp: '^listen.owner', line: 'listen.owner = {{ nginx_user }}' }
+        - { regexp: '^listen.group', line: 'listen.group = {{ nginx_user }}' }
+        - { regexp: '^;listen.mode', line: 'listen.mode = 0660' }
+        - { regexp: '^listen.mode', line: 'listen.mode = 0660' }
+        - { regexp: '^pm.max_children', line: 'pm.max_children = 50' }
+        - { regexp: '^pm.start_servers', line: 'pm.start_servers = 5' }
+        - { regexp: '^pm.min_spare_servers', line: 'pm.min_spare_servers = 5' }
+        - { regexp: '^pm.max_spare_servers', line: 'pm.max_spare_servers = 35' }
+      tags: php
+    
+    - name: 3.7 - Redémarrer PHP-FPM
+      systemd:
+        name: php{{ php_version }}-fpm
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+      tags: php
+    
+    - name: 3.8 - Vérifier que PHP-FPM est actif
+      systemd:
+        name: php{{ php_version }}-fpm
+        state: started
+      register: php_fpm_status
+      tags: php
+    
+    - name: 3.9 - Créer un fichier de test PHP
+      copy:
+        content: |
+          <?php
+          phpinfo();
+        dest: /var/www/magento/pub/info.php
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0644'
+      tags: php
+    
+    - name: 3.10 - Redémarrer Nginx
+      systemd:
+        name: nginx
+        state: restarted
+      tags: php
+    
+    - name: 3.11 - Message de succès ÉTAPE 3
+      debug:
+        msg:
+          - "=========================================="
+          - " ÉTAPE 3 COMPLÉTÉE AVEC SUCCÈS !"
+          - "=========================================="
+          - "PHP {{ php_version }} installé avec toutes les extensions Magento"
+          - "PHP-FPM configuré et actif"
+          - "Test : curl http://localhost/info.php"
+          - "N'oubliez pas de supprimer info.php en production !"
+          - "=========================================="
+      tags: php
