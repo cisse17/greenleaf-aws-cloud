@@ -315,7 +315,7 @@
     - name: 2.12 - Vérifier que Nginx est actif
       systemd:
         name: nginx
-        state: startd
+        state: started
       register: nginx_status
       tags: nginx
     
