@@ -17,6 +17,8 @@
     project_name: greenleaf
     magento_root: /var/www/magento
     php_version: "8.2"
+    php_memory_limit: "2G"
+    php_max_execution_time: "1800"
     nginx_user: www-data
 
   tasks:
@@ -28,7 +30,7 @@
       debug:
         msg: 
           - "=========================================="
-          - "🚀 Installation GreenLeaf Magento"
+          - "Installation GreenLeaf Magento"
           - "=========================================="
           - "OS : {{ ansible_distribution }} {{ ansible_distribution_version }}"
           - "CPU : {{ ansible_processor_vcpus }} vCPUs"
@@ -75,10 +77,256 @@
       debug:
         msg:
           - "=========================================="
-          - "✅ ÉTAPE 1 COMPLÉTÉE AVEC SUCCÈS !"
+          - "ÉTAPE 1 COMPLÉTÉE AVEC SUCCÈS !"
           - "=========================================="
           - "Système préparé et prêt pour Nginx"
           - "Timezone : {{ server_timezone }}"
           - "Locale : {{ server_locale }}"
           - "=========================================="
       tags: system
+    # ========================================================================
+    # ÉTAPE 2 : INSTALLATION ET CONFIGURATION NGINX
+    # ========================================================================
+    
+    - name: 2.1 - Installer Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      tags: nginx
+    
+    - name: 2.2 - Créer le répertoire Magento
+      file:
+        path: "{{ magento_root }}"
+        state: directory
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0755'
+      tags: nginx
+    
+    - name: 2.3 - Créer le répertoire pour les sites disponibles
+      file:
+        path: /var/www/html
+        state: directory
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0755'
+      tags: nginx
+    
+    - name: 2.4 - Créer une page de test temporaire
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>GreenLeaf - En cours d'installation</title>
+              <style>
+                  body { font-family: Arial; text-align: center; padding: 50px; background: #f0f0f0; }
+                  h1 { color: #2ecc71; }
+              </style>
+          </head>
+          <body>
+              <h1>GreenLeaf E-commerce</h1>
+              <h2>Installation Magento en cours...</h2>
+              <p>Nginx est opérationnel</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: "{{ nginx_user }}"
+        group: "{{ nginx_user }}"
+        mode: '0644'
+      tags: nginx
+    
+    - name: 2.5 - Supprimer la configuration Nginx par défaut
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      tags: nginx
+    
+    - name: 2.6 - Créer la configuration Nginx pour Magento
+      copy:
+        content: |
+          upstream fastcgi_backend {
+              server unix:/run/php/php{{ php_version }}-fpm.sock;
+          }
+
+          server {
+              listen 80;
+              server_name localhost {{ ansible_hostname }};
+              
+              set $MAGE_ROOT {{ magento_root }};
+              set $MAGE_MODE developer;
+              
+              root $MAGE_ROOT/pub;
+              
+              index index.php;
+              autoindex off;
+              charset UTF-8;
+              
+              client_max_body_size 64M;
+              
+              # Logs
+              access_log /var/log/nginx/magento_access.log;
+              error_log /var/log/nginx/magento_error.log;
+              
+              # Page de test temporaire (avant installation Magento)
+              location = / {
+                  try_files /index.html /index.php$is_args$args;
+              }
+              
+              location / {
+                  try_files $uri $uri/ /index.php$is_args$args;
+              }
+              
+              location /pub/ {
+                  location ~ ^/pub/media/(downloadable|customer|import|theme_customization/.*\.xml) {
+                      deny all;
+                  }
+                  alias $MAGE_ROOT/pub/;
+                  add_header X-Frame-Options "SAMEORIGIN";
+              }
+              
+              location /static/ {
+                  expires max;
+                  location ~ ^/static/version {
+                      rewrite ^/static/(version\d*/)?(.*)$ /static/$2 last;
+                  }
+                  location ~* \.(ico|jpg|jpeg|png|gif|svg|js|css|swf|eot|ttf|otf|woff|woff2|json)$ {
+                      add_header Cache-Control "public";
+                      add_header X-Frame-Options "SAMEORIGIN";
+                      expires +1y;
+                      if (!-f $request_filename) {
+                          rewrite ^/static/?(.*)$ /static.php?resource=$1 last;
+                      }
+                  }
+                  location ~* \.(zip|gz|gzip|bz2|csv|xml)$ {
+                      add_header Cache-Control "no-store";
+                      add_header X-Frame-Options "SAMEORIGIN";
+                      expires off;
+                      if (!-f $request_filename) {
+                          rewrite ^/static/?(.*)$ /static.php?resource=$1 last;
+                      }
+                  }
+                  if (!-f $request_filename) {
+                      rewrite ^/static/?(.*)$ /static.php?resource=$1 last;
+                  }
+                  add_header X-Frame-Options "SAMEORIGIN";
+              }
+              
+              location /media/ {
+                  try_files $uri $uri/ /get.php$is_args$args;
+                  location ~ ^/media/theme_customization/.*\.xml {
+                      deny all;
+                  }
+                  location ~* \.(ico|jpg|jpeg|png|gif|svg|js|css|swf|eot|ttf|otf|woff|woff2)$ {
+                      add_header Cache-Control "public";
+                      add_header X-Frame-Options "SAMEORIGIN";
+                      expires +1y;
+                      try_files $uri $uri/ /get.php$is_args$args;
+                  }
+                  location ~* \.(zip|gz|gzip|bz2|csv|xml)$ {
+                      add_header Cache-Control "no-store";
+                      add_header X-Frame-Options "SAMEORIGIN";
+                      expires off;
+                      try_files $uri $uri/ /get.php$is_args$args;
+                  }
+                  add_header X-Frame-Options "SAMEORIGIN";
+              }
+              
+              location /media/customer/ {
+                  deny all;
+              }
+              
+              location /media/downloadable/ {
+                  deny all;
+              }
+              
+              location /media/import/ {
+                  deny all;
+              }
+              
+              # PHP entry point for main application
+              location ~ ^/(index|get|static|errors/report|errors/404|errors/503|health_check)\.php$ {
+                  try_files $uri =404;
+                  fastcgi_pass fastcgi_backend;
+                  fastcgi_buffers 1024 4k;
+                  fastcgi_buffer_size 128k;
+                  fastcgi_busy_buffers_size 256k;
+                  fastcgi_read_timeout 600s;
+                  fastcgi_connect_timeout 600s;
+                  
+                  fastcgi_index index.php;
+                  fastcgi_param PHP_FLAG "session.auto_start=off \n suhosin.session.cryptua=off";
+                  fastcgi_param PHP_VALUE "memory_limit={{ php_memory_limit }} \n max_execution_time={{ php_max_execution_time }}";
+                  fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                  fastcgi_param MAGE_MODE $MAGE_MODE;
+                  
+                  include fastcgi_params;
+              }
+              
+              # Deny everything else in .php
+              location ~* \.php$ {
+                  deny all;
+              }
+              
+              # Deny access to sensitive files
+              location ~* (\.git|\.htaccess|\.htpasswd|\.sample|composer\.json|composer\.lock|\.DS_Store) {
+                  deny all;
+              }
+          }
+        dest: /etc/nginx/sites-available/magento
+        owner: root
+        group: root
+        mode: '0644'
+      tags: nginx
+    
+    - name: 2.7 - Activer le site Magento
+      file:
+        src: /etc/nginx/sites-available/magento
+        dest: /etc/nginx/sites-enabled/magento
+        state: link
+      tags: nginx
+    
+    - name: 2.8 - Tester la configuration Nginx
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+      tags: nginx
+    
+    - name: 2.9 - Afficher le résultat du test Nginx
+      debug:
+        var: nginx_test.stderr_lines
+      tags: nginx
+    
+    - name: 2.10 - Démarrer et activer Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      tags: nginx
+    
+    - name: 2.11 - Redémarrer Nginx
+      systemd:
+        name: nginx
+        state: restarted
+      tags: nginx
+    
+    - name: 2.12 - Vérifier que Nginx est actif
+      systemd:
+        name: nginx
+        state: started
+      register: nginx_status
+      tags: nginx
+    
+    - name: 2.13 - Message de succès ÉTAPE 2
+      debug:
+        msg:
+          - "=========================================="
+          - "ÉTAPE 2 COMPLÉTÉE AVEC SUCCÈS !"
+          - "=========================================="
+          - "Nginx installé et configuré pour Magento"
+          - "Configuration : /etc/nginx/sites-available/magento"
+          - "Test : curl http://localhost"
+          - "=========================================="
+      tags: nginx
