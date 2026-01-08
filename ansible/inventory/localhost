@@ -1,0 +1,5 @@
+[magento]
+localhost ansible_connection=local
+
+[magento:vars]
+ansible_python_interpreter=/usr/bin/python3

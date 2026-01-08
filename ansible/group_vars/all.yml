@@ -1,0 +1,51 @@
+---
+# ============================================================================
+# VARIABLES GREENLEAF - ENVIRONNEMENT DE DÉVELOPPEMENT
+# ============================================================================
+
+# Configuration générale
+project_name: greenleaf
+env: dev
+# ou
+app_environment: dev
+
+# Configuration serveur
+server_timezone: Europe/Paris
+server_locale: fr_FR.UTF-8
+
+# Configuration Nginx
+nginx_user: www-data
+nginx_root: /var/www/magento
+
+# Configuration PHP
+php_version: "8.2"
+php_memory_limit: "2G"
+php_max_execution_time: "1800"
+php_upload_max_filesize: "64M"
+
+# Configuration Magento
+magento_version: "2.4.6"
+magento_root: /var/www/magento
+magento_admin_user: admin
+magento_admin_firstname: Admin
+magento_admin_lastname: GreenLeaf
+magento_admin_email: admin@greenleaf.local
+magento_admin_password: Admin123!
+magento_base_url: http://localhost
+
+# Configuration base de données (MySQL local pour dev)
+db_host: localhost
+db_port: 3306
+db_name: magento
+db_username: magento_admin
+db_password: MagentoPass123!
+
+# Configuration Elasticsearch
+elasticsearch_version: "8.11"
+elasticsearch_host: localhost
+elasticsearch_port: 9200
+
+# Configuration Redis
+redis_host: localhost
+redis_port: 6379
+redis_maxmemory: 512mb

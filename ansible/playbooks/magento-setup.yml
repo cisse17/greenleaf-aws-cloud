@@ -1,0 +1,84 @@
+---
+# ============================================================================
+# GREENLEAF - PLAYBOOK D'INSTALLATION MAGENTO
+# ============================================================================
+
+- name: GreenLeaf - Installation et configuration Magento
+  hosts: magento
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    # ========================================================================
+    # VARIABLES (définies directement dans le playbook)
+    # ========================================================================
+    server_timezone: Europe/Paris
+    server_locale: fr_FR.UTF-8
+    project_name: greenleaf
+    magento_root: /var/www/magento
+    php_version: "8.2"
+    nginx_user: www-data
+
+  tasks:
+    # ========================================================================
+    # ÉTAPE 1 : PRÉPARATION DU SYSTÈME
+    # ========================================================================
+    
+    - name: 1.1 - Afficher les informations système
+      debug:
+        msg: 
+          - "=========================================="
+          - "🚀 Installation GreenLeaf Magento"
+          - "=========================================="
+          - "OS : {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "CPU : {{ ansible_processor_vcpus }} vCPUs"
+          - "RAM : {{ ansible_memtotal_mb }} MB"
+          - "Hostname : {{ ansible_hostname }}"
+          - "=========================================="
+      tags: system
+    
+    - name: 1.2 - Mise à jour du cache APT
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: system
+    
+    - name: 1.3 - Installation des outils de base
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - unzip
+          - vim
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: yes
+      tags: system
+    
+    - name: 1.4 - Configurer le timezone
+      timezone:
+        name: "{{ server_timezone }}"
+      tags: system
+    
+    - name: 1.5 - Configurer la locale
+      locale_gen:
+        name: "{{ server_locale }}"
+        state: present
+      tags: system
+    
+    - name: 1.6 - Message de succès ÉTAPE 1
+      debug:
+        msg:
+          - "=========================================="
+          - "✅ ÉTAPE 1 COMPLÉTÉE AVEC SUCCÈS !"
+          - "=========================================="
+          - "Système préparé et prêt pour Nginx"
+          - "Timezone : {{ server_timezone }}"
+          - "Locale : {{ server_locale }}"
+          - "=========================================="
+      tags: system
