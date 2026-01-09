@@ -1,0 +1,15 @@
+﻿# Sur la branche docs/DAT/Finops/Deploy-guide
+# N'afficher que la documentation
+
+# Ignorer TOUT d'abord
+/*
+
+# Exceptions : afficher uniquement docs/ et .gitignore
+!/docs/
+!/.gitignore
+
+# Ignorer spécifiquement ces fichiers/dossiers
+awscliv2.zip
+session-manager-plugin.deb
+keys/
+aws/
