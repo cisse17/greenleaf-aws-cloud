@@ -1,10 +1,6 @@
-# ============================================================================
 # MODULE STORAGE - S3 pour Médias Magento
-# ============================================================================
 
-# ----------------------------------------------------------------------------
 # Bucket S3 pour les médias (images produits, etc.)
-# ----------------------------------------------------------------------------
 resource "aws_s3_bucket" "media" {
   bucket_prefix = "${var.project_name}-${var.environment}-media-"
 
@@ -17,9 +13,7 @@ resource "aws_s3_bucket" "media" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Configuration du versioning
-# ----------------------------------------------------------------------------
 resource "aws_s3_bucket_versioning" "media" {
   bucket = aws_s3_bucket.media.id
 
@@ -28,9 +22,7 @@ resource "aws_s3_bucket_versioning" "media" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Chiffrement du bucket
-# ----------------------------------------------------------------------------
 resource "aws_s3_bucket_server_side_encryption_configuration" "media" {
   bucket = aws_s3_bucket.media.id
 
@@ -41,9 +33,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "media" {
   }
 }
 
-# ----------------------------------------------------------------------------
-# Bloquer l'accès public (sécurité)
-# ----------------------------------------------------------------------------
+# Pour Bloquer l'accès public (sécurité)
 resource "aws_s3_bucket_public_access_block" "media" {
   bucket = aws_s3_bucket.media.id
 
@@ -53,9 +43,7 @@ resource "aws_s3_bucket_public_access_block" "media" {
   restrict_public_buckets = true
 }
 
-# ----------------------------------------------------------------------------
 # Politique de cycle de vie (optimisation coûts)
-# ----------------------------------------------------------------------------
 resource "aws_s3_bucket_lifecycle_configuration" "media" {
   bucket = aws_s3_bucket.media.id
 
@@ -64,7 +52,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "media" {
     status = "Enabled"
 
     filter {
-      prefix = ""  # <-- Ajout pour éviter le warning
+      prefix = ""  # je l'ai ajouté pour éviter le warning
     }
 
     noncurrent_version_transition {
@@ -87,7 +75,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "media" {
     status = "Enabled"
 
     filter {
-      prefix = ""  # <-- Ajout pour éviter le warning
+      prefix = ""  
     }
 
     abort_incomplete_multipart_upload {
@@ -96,9 +84,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "media" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # CORS pour accès depuis Magento
-# ----------------------------------------------------------------------------
 resource "aws_s3_bucket_cors_configuration" "media" {
   bucket = aws_s3_bucket.media.id
 
@@ -111,9 +97,7 @@ resource "aws_s3_bucket_cors_configuration" "media" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Policy pour permettre l'accès depuis CloudFront et EC2
-# ----------------------------------------------------------------------------
 resource "aws_s3_bucket_policy" "media" {
   bucket = aws_s3_bucket.media.id
 
@@ -141,9 +125,7 @@ resource "aws_s3_bucket_policy" "media" {
   })
 }
 
-# ----------------------------------------------------------------------------
 # IAM Role pour EC2 (accès S3)
-# ----------------------------------------------------------------------------
 resource "aws_iam_role" "ec2_s3_access" {
   name_prefix = "${var.project_name}-ec2-s3-"
 
@@ -163,9 +145,7 @@ resource "aws_iam_role" "ec2_s3_access" {
   tags = var.tags
 }
 
-# ----------------------------------------------------------------------------
 # IAM Policy pour accès S3
-# ----------------------------------------------------------------------------
 resource "aws_iam_role_policy" "ec2_s3_access" {
   name_prefix = "${var.project_name}-ec2-s3-policy-"
   role        = aws_iam_role.ec2_s3_access.id
@@ -190,9 +170,7 @@ resource "aws_iam_role_policy" "ec2_s3_access" {
   })
 }
 
-# ----------------------------------------------------------------------------
 # Instance Profile pour EC2
-# ----------------------------------------------------------------------------
 resource "aws_iam_instance_profile" "ec2" {
   name_prefix = "${var.project_name}-ec2-profile-"
   role        = aws_iam_role.ec2_s3_access.name
