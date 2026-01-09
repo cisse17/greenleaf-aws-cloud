@@ -3,7 +3,7 @@
 
 **Projet :** GreenLeaf E-commerce Éco-responsable  
 **Date :** 07 Janvier 2026  
-**Équipe :** Bassirou, Valence, Herby, Ibrahima
+**Équipe :** Bassirou, Valence, Herby, Ibrahima 
 **Version :** 1.0  
 **Statut :** Déployé en Production
 
