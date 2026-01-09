@@ -1,10 +1,6 @@
-# ============================================================================
 # VARIABLES - CONFIGURATION GREENLEAF
-# ============================================================================
 
-# ----------------------------------------------------------------------------
 # Variables Générales
-# ----------------------------------------------------------------------------
 variable "project_name" {
   description = "Nom du projet"
   type        = string
@@ -34,9 +30,7 @@ variable "common_tags" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Variables Réseau (VPC)
-# ----------------------------------------------------------------------------
 variable "vpc_cidr" {
   description = "CIDR block pour le VPC"
   type        = string
@@ -61,9 +55,7 @@ variable "private_subnet_cidrs" {
   default     = ["10.0.11.0/24", "10.0.12.0/24"]
 }
 
-# ----------------------------------------------------------------------------
 # Variables Compute (EC2 / Auto Scaling)
-# ----------------------------------------------------------------------------
 variable "instance_type" {
   description = "Type d'instance EC2"
   type        = string
@@ -105,9 +97,7 @@ variable "asg_desired_capacity" {
   default     = 2
 }
 
-# ----------------------------------------------------------------------------
 # Variables Base de Données (RDS)
-# ----------------------------------------------------------------------------
 variable "db_instance_class" {
   description = "Classe d'instance RDS"
   type        = string
@@ -156,36 +146,28 @@ variable "db_backup_retention" {
   default     = 7
 }
 
-# ----------------------------------------------------------------------------
 # Variables Sécurité
-# ----------------------------------------------------------------------------
 variable "allowed_ssh_cidr" {
   description = "CIDR autorisé pour l'accès SSH (votre IP publique)"
   type        = list(string)
-  default     = ["0.0.0.0/0"] # À CHANGER pour votre IP uniquement !
+  default     = ["0.0.0.0/0"] # À CHANGER pour mon IP uniquement 
 }
 
-# ----------------------------------------------------------------------------
 # Variables CloudFront
-# ----------------------------------------------------------------------------
 variable "enable_cloudfront" {
   description = "Activer CloudFront CDN"
   type        = bool
   default     = true
 }
 
-# ----------------------------------------------------------------------------
 # Variables Monitoring
-# ----------------------------------------------------------------------------
 variable "alarm_email" {
   description = "Email pour recevoir les alertes CloudWatch"
   type        = string
-  default     = "admin@greenleaf.com"
+  default     = "bassiroucisse1711@gmail.com"
 }
 
-# ----------------------------------------------------------------------------
 # Variables FinOps
-# ----------------------------------------------------------------------------
 variable "enable_cost_allocation_tags" {
   description = "Activer les tags d'allocation de coûts"
   type        = bool
@@ -200,9 +182,7 @@ variable "monthly_budget_limit" {
 
 
 
-# ----------------------------------------------------------------------------
 # Variables pour Credentials AWS
-# ----------------------------------------------------------------------------
 variable "aws_access_key" {
   description = "AWS Access Key ID"
   type        = string

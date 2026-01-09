@@ -1,10 +1,6 @@
-# ============================================================================
 # MODULE SECURITY - SECURITY GROUPS
-# ============================================================================
 
-# ----------------------------------------------------------------------------
 # Security Group pour ALB (Application Load Balancer)
-# ----------------------------------------------------------------------------
 resource "aws_security_group" "alb" {
   name_prefix = "${var.project_name}-${var.environment}-alb-"
   description = "Security group for Application Load Balancer"
@@ -49,9 +45,7 @@ resource "aws_security_group" "alb" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Security Group pour Instances EC2 (Magento)
-# ----------------------------------------------------------------------------
 resource "aws_security_group" "ec2" {
   name_prefix = "${var.project_name}-${var.environment}-ec2-"
   description = "Security group for EC2 instances running Magento"
@@ -105,9 +99,7 @@ resource "aws_security_group" "ec2" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Security Group pour RDS (Base de données MySQL)
-# ----------------------------------------------------------------------------
 resource "aws_security_group" "rds" {
   name_prefix = "${var.project_name}-${var.environment}-rds-"
   description = "Security group for RDS MySQL database"
@@ -143,9 +135,7 @@ resource "aws_security_group" "rds" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Security Group pour ElastiCache (Redis/Memcached - Optionnel)
-# ----------------------------------------------------------------------------
 resource "aws_security_group" "cache" {
   name_prefix = "${var.project_name}-${var.environment}-cache-"
   description = "Security group for ElastiCache"
