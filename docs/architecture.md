@@ -1,4 +1,4 @@
-#  Document d'Architecture Technique (DAT)
+#   Document d'Architecture Technique (DAT)
 ## Projet GreenLeaf - Plateforme E-commerce sur AWS
 
 **Projet :** GreenLeaf E-commerce Éco-responsable  

@@ -1,4 +1,4 @@
-#  Rapport d'Analyse FinOps
+#   Rapport d'Analyse FinOps
 ## Projet GreenLeaf - Plateforme E-commerce sur AWS
 
 **Projet :** GreenLeaf E-commerce Éco-responsable  

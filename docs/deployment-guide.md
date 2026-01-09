@@ -1,4 +1,4 @@
-# Guide de déploiement de l’infrastructure Greenleaf Ecommerce
+#  Guide de déploiement de l’infrastructure Greenleaf Ecommerce
 
 ## 1. Objectif du document
 Ce document décrit l’ensemble des étapes permettant de déployer l’infrastructure Cloud du projet **Greenleaf Ecommerce** sur AWS.  
