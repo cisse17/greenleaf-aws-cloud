@@ -20,6 +20,16 @@
     php_upload_max_filesize: "64M"
     nginx_user: www-data
 
+    # Elasticsearch
+    elasticsearch_version: "8.x"
+    elasticsearch_host: localhost
+    elasticsearch_port: 9200
+
+   # Redis
+    redis_host: localhost
+    redis_port: 6379
+    redis_maxmemory: 512mb
+
   tasks:
     # ========================================================================
     # ÉTAPE 1 : PRÉPARATION DU SYSTÈME
@@ -639,3 +649,170 @@
           - "Prêt pour installer Magento !"
           - "=========================================="
       tags: composer
+    # ========================================================================
+    # ÉTAPE 6 : INSTALLATION ELASTICSEARCH
+    # ========================================================================
+    
+    - name: 6.1 - Installer Java (requis pour Elasticsearch)
+      apt:
+        name:
+          - openjdk-11-jre-headless
+        state: present
+        update_cache: yes
+      tags: elasticsearch
+    
+    - name: 6.2 - Ajouter la clé GPG Elasticsearch
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+      tags: elasticsearch
+    
+    - name: 6.3 - Ajouter le repository Elasticsearch
+      apt_repository:
+        repo: 'deb https://artifacts.elastic.co/packages/8.x/apt stable main'
+        state: present
+        filename: elastic-8.x
+        update_cache: yes
+      tags: elasticsearch
+    
+    - name: 6.4 - Installer Elasticsearch
+      apt:
+        name: elasticsearch
+        state: present
+        update_cache: yes
+      tags: elasticsearch
+    
+    - name: 6.5 - Configurer Elasticsearch pour Magento
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^#?cluster.name:', line: 'cluster.name: magento' }
+        - { regexp: '^#?node.name:', line: 'node.name: magento-node-1' }
+        - { regexp: '^#?network.host:', line: 'network.host: {{ elasticsearch_host }}' }
+        - { regexp: '^#?http.port:', line: 'http.port: {{ elasticsearch_port }}' }
+        - { regexp: '^#?discovery.type:', line: 'discovery.type: single-node' }
+        - { regexp: '^#?xpack.security.enabled:', line: 'xpack.security.enabled: false' }
+      tags: elasticsearch
+    
+    - name: 6.6 - Configurer la mémoire JVM pour Elasticsearch
+      lineinfile:
+        path: /etc/elasticsearch/jvm.options.d/magento.options
+        line: "{{ item }}"
+        create: yes
+        mode: '0644'
+      loop:
+        - '-Xms512m'
+        - '-Xmx512m'
+      tags: elasticsearch
+    
+    - name: 6.7 - Démarrer et activer Elasticsearch
+      systemd:
+        name: elasticsearch
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      tags: elasticsearch
+    
+    - name: 6.8 - Attendre qu'Elasticsearch soit prêt (30 secondes)
+      wait_for:
+        port: "{{ elasticsearch_port }}"
+        delay: 10
+        timeout: 60
+      tags: elasticsearch
+    
+    - name: 6.9 - Tester la connexion Elasticsearch
+      uri:
+        url: "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+        method: GET
+        return_content: yes
+      register: elasticsearch_test
+      retries: 5
+      delay: 5
+      until: elasticsearch_test.status == 200
+      tags: elasticsearch
+    
+    - name: 6.10 - Afficher les informations Elasticsearch
+      debug:
+        msg: "{{ elasticsearch_test.json }}"
+      tags: elasticsearch
+    
+    - name: 6.11 - Message de succès ÉTAPE 6
+      debug:
+        msg:
+          - "=========================================="
+          - " ÉTAPE 6 COMPLÉTÉE AVEC SUCCÈS !"
+          - "=========================================="
+          - "Elasticsearch installé et configuré"
+          - "URL : http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+          - "Cluster : magento"
+          - "Prêt pour Magento !"
+          - "=========================================="
+      tags: elasticsearch
+    # ========================================================================
+    # ÉTAPE 7 : INSTALLATION REDIS
+    # ========================================================================
+    
+    - name: 7.1 - Installer Redis
+      apt:
+        name:
+          - redis-server
+        state: present
+        update_cache: yes
+      tags: redis
+    
+    - name: 7.2 - Configurer Redis pour Magento
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^bind ', line: 'bind 127.0.0.1' }
+        - { regexp: '^port ', line: 'port {{ redis_port }}' }
+        - { regexp: '^# maxmemory ', line: 'maxmemory {{ redis_maxmemory }}' }
+        - { regexp: '^maxmemory ', line: 'maxmemory {{ redis_maxmemory }}' }
+        - { regexp: '^# maxmemory-policy', line: 'maxmemory-policy allkeys-lru' }
+        - { regexp: '^maxmemory-policy', line: 'maxmemory-policy allkeys-lru' }
+      tags: redis
+    
+    - name: 7.3 - Démarrer et activer Redis
+      systemd:
+        name: redis-server
+        state: restarted
+        enabled: yes
+      tags: redis
+    
+    - name: 7.4 - Vérifier que Redis est actif
+      systemd:
+        name: redis-server
+        state: started
+      register: redis_status
+      tags: redis
+    
+    - name: 7.5 - Tester la connexion Redis
+      command: redis-cli ping
+      register: redis_test
+      changed_when: false
+      tags: redis
+    
+    - name: 7.6 - Afficher le résultat du test Redis
+      debug:
+        msg: "Redis répond : {{ redis_test.stdout }}"
+      tags: redis
+    
+    - name: 7.7 - Message de succès ÉTAPE 7
+      debug:
+        msg:
+          - "=========================================="
+          - " ÉTAPE 7 COMPLÉTÉE AVEC SUCCÈS !"
+          - "=========================================="
+          - "Redis installé et configuré"
+          - "Host : {{ redis_host }}"
+          - "Port : {{ redis_port }}"
+          - "Mémoire max : {{ redis_maxmemory }}"
+          - "Test : redis-cli ping"
+          - "=========================================="
+      tags: redis
