@@ -18,7 +18,7 @@ nginx_user: www-data
 nginx_root: /var/www/magento
 
 # Configuration PHP
-php_version: "8.2"
+php_version: "8.3"
 php_memory_limit: "2G"
 php_max_execution_time: "1800"
 php_upload_max_filesize: "64M"
@@ -30,7 +30,7 @@ magento_admin_user: admin
 magento_admin_firstname: Admin
 magento_admin_lastname: GreenLeaf
 magento_admin_email: admin@greenleaf.local
-magento_admin_password: Admin123!
+magento_admin_password: "{{ vault_magento_admin_password }}"
 magento_base_url: http://localhost
 
 # Configuration base de données (MySQL local pour dev)
@@ -38,7 +38,7 @@ db_host: localhost
 db_port: 3306
 db_name: magento
 db_username: magento_admin
-db_password: MagentoPass123!
+db_password: "{{ vault_db_password }}"
 
 # Configuration Elasticsearch
 elasticsearch_version: "8.11"

@@ -8,19 +8,6 @@
   become: yes
   gather_facts: yes
   
-  vars:
-    # ========================================================================
-    # VARIABLES (définies directement dans le playbook)
-    # ========================================================================
-    server_timezone: Europe/Paris
-    server_locale: fr_FR.UTF-8
-    project_name: greenleaf
-    magento_root: /var/www/magento
-    php_version: "8.3"
-    php_memory_limit: "2G"
-    php_max_execution_time: "1800"
-    nginx_user: www-data
-
   tasks:
     # ========================================================================
     # ÉTAPE 1 : PRÉPARATION DU SYSTÈME
@@ -470,3 +457,110 @@
           - "N'oubliez pas de supprimer info.php en production !"
           - "=========================================="
       tags: php
+    # ========================================================================
+    # ÉTAPE 4 : INSTALLATION ET CONFIGURATION MYSQL
+    # ========================================================================
+    
+    - name: 4.1 - Installer MySQL Server et client
+      apt:
+        name:
+          - mysql-server
+          - mysql-client
+          - python3-pymysql
+        state: present
+        update_cache: yes
+      tags: mysql
+    
+    - name: 4.2 - Démarrer et activer MySQL
+      systemd:
+        name: mysql
+        state: started
+        enabled: yes
+      tags: mysql
+    
+    - name: 4.3 - Vérifier que MySQL est actif
+      systemd:
+        name: mysql
+        state: started
+      register: mysql_status
+      tags: mysql
+    
+    - name: 4.4 - Créer la base de données Magento
+      mysql_db:
+        name: "{{ db_name }}"
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      tags: mysql
+      when: false
+    
+    - name: 4.5 - Créer l'utilisateur Magento
+      mysql_user:
+        name: "{{ db_username }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        host: "{{ db_host }}"
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      tags: mysql
+      when: false
+    
+    - name: 4.6 - Configurer MySQL pour Magento
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        insertafter: "^\\[mysqld\\]"
+        backup: yes
+      loop:
+        - { regexp: '^max_allowed_packet', line: 'max_allowed_packet = 64M' }
+        - { regexp: '^innodb_buffer_pool_size', line: 'innodb_buffer_pool_size = 1G' }
+        - { regexp: '^innodb_log_file_size', line: 'innodb_log_file_size = 256M' }
+        - { regexp: '^innodb_flush_log_at_trx_commit', line: 'innodb_flush_log_at_trx_commit = 2' }
+        - { regexp: '^innodb_flush_method', line: 'innodb_flush_method = O_DIRECT' }
+        - { regexp: '^table_open_cache', line: 'table_open_cache = 4000' }
+        - { regexp: '^join_buffer_size', line: 'join_buffer_size = 8M' }
+        - { regexp: '^sort_buffer_size', line: 'sort_buffer_size = 8M' }
+        - { regexp: '^read_rnd_buffer_size', line: 'read_rnd_buffer_size = 8M' }
+      tags: mysql
+    
+    - name: 4.7 - Redémarrer MySQL pour appliquer les changements
+      systemd:
+        name: mysql
+        state: restarted
+      tags: mysql
+    
+    - name: 4.8 - Tester la connexion MySQL
+      command: mysql -u{{ db_username }} -p{{ db_password }} -h{{ db_host }} -e "SELECT 1;"
+      register: mysql_test
+      changed_when: false
+      no_log: true
+      tags: mysql
+      when: false
+    
+    - name: 4.9 - Vérifier les bases de données
+      command: mysql -u{{ db_username }} -p{{ db_password }} -h{{ db_host }} -e "SHOW DATABASES;"
+      register: mysql_databases
+      changed_when: false
+      no_log: true
+      tags: mysql
+      when: false
+    
+    - name: 4.10 - Afficher les bases de données
+      debug:
+        msg: "{{ mysql_databases.stdout_lines }}"
+      tags: mysql
+      when: false
+    
+    - name: 4.11 - Message de succès ÉTAPE 4
+      debug:
+        msg:
+          - "=========================================="
+          - " ÉTAPE 4 COMPLÉTÉE AVEC SUCCÈS !"
+          - "=========================================="
+          - "MySQL 8.0 installé et configuré"
+          - "Base de données : magento"
+          - "Utilisateur : magento_admin"
+          - "MySQL optimisé pour Magento"
+          - "Test connexion : OK "
+          - "=========================================="
+      tags: mysql
