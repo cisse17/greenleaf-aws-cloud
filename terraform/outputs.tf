@@ -1,8 +1,5 @@
-# ============================================================================
 # OUTPUTS - INFORMATIONS DE DÉPLOIEMENT
-# ============================================================================
 
-# ----------------------------------------------------------------------------
 # URLs d'Accès
 # ----------------------------------------------------------------------------
 output "website_url" {
@@ -16,12 +13,12 @@ output "alb_dns_name" {
 }
 
 # output "cloudfront_url" {
-#  description = "🚀 URL CloudFront (CDN)"
+#  description = " URL CloudFront (CDN)"
 #  value       = var.enable_cloudfront ? "http://${module.cdn[0].cloudfront_domain_name}" : "CloudFront non activé"
 #}
 
 # output "magento_admin_url" {
-#  description = "🔐 URL de l'interface d'administration Magento"
+#  description = " URL de l'interface d'administration Magento"
 #  value       = "http://${module.compute.alb_dns_name}/admin"
 # }
 
@@ -64,7 +61,7 @@ output "asg_name" {
 # ----------------------------------------------------------------------------
 # output "ansible_inventory_created" {
 #  description = "Confirmation de création de l'inventaire Ansible"
-#  value       = "✅ Inventaire créé dans ansible/inventory/hosts"
+#  value       = " Inventaire créé dans ansible/inventory/hosts"
 #}
 
 # output "ansible_extra_vars" {
@@ -77,20 +74,18 @@ output "asg_name" {
 #  sensitive = true
 # }
 
-# ----------------------------------------------------------------------------
 # Message de Succès
-# ----------------------------------------------------------------------------
 output "deployment_success" {
   description = "Message de succès du déploiement"
   value       = <<-EOT
   
   ╔══════════════════════════════════════════════════════════════════╗
-  ║         🎉 DÉPLOIEMENT RÉUSSI - GREENLEAF E-COMMERCE            ║
+  ║          DÉPLOIEMENT RÉUSSI - GREENLEAF E-COMMERCE            ║
   ╚══════════════════════════════════════════════════════════════════╝
   
-  📌 Infrastructure AWS déployée avec succès !
+   Infrastructure AWS déployée avec succès !
   
-  🌐 URL principale (à ouvrir dans votre navigateur) :
+   URL principale (à ouvrir dans votre navigateur) :
      http://${module.compute.alb_dns_name}
   
   🔐 Interface d'administration Magento :
@@ -128,9 +123,7 @@ output "deployment_success" {
   EOT
 }
 
-# ----------------------------------------------------------------------------
 # Coûts Estimés
-# ----------------------------------------------------------------------------
 output "estimated_monthly_cost" {
   description = "💰 Estimation des coûts mensuels"
   value       = <<-EOT

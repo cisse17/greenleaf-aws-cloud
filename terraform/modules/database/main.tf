@@ -1,10 +1,6 @@
-# ============================================================================
 # MODULE DATABASE - RDS MySQL
-# ============================================================================
 
-# ----------------------------------------------------------------------------
 # Subnet Group pour RDS (Multi-AZ)
-# ----------------------------------------------------------------------------
 resource "aws_db_subnet_group" "main" {
   name_prefix = "${var.project_name}-${var.environment}-"
   description = "Subnet group for RDS MySQL"
@@ -18,9 +14,7 @@ resource "aws_db_subnet_group" "main" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Parameter Group MySQL (Optimisations Magento)
-# ----------------------------------------------------------------------------
 resource "aws_db_parameter_group" "magento" {
   name_prefix = "${var.project_name}-${var.environment}-"
   family      = "mysql8.0"
@@ -59,9 +53,7 @@ resource "aws_db_parameter_group" "magento" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Instance RDS MySQL
-# ----------------------------------------------------------------------------
 resource "aws_db_instance" "magento" {
   identifier     = "${var.project_name}-${var.environment}-db"
   engine         = "mysql"
@@ -114,14 +106,12 @@ resource "aws_db_instance" "magento" {
   )
 
   lifecycle {
-    prevent_destroy = false  # Mettre à true en production !
-    ignore_changes  = [password]  # Ne pas recréer si le mot de passe change
+    prevent_destroy = true
+    ignore_changes  = [password] 
   }
 }
 
-# ----------------------------------------------------------------------------
 # IAM Role pour Enhanced Monitoring
-# ----------------------------------------------------------------------------
 resource "aws_iam_role" "rds_monitoring" {
   name_prefix = "${var.project_name}-rds-monitoring-"
 
@@ -146,9 +136,7 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
-# ----------------------------------------------------------------------------
 # Alarme CloudWatch - CPU élevé
-# ----------------------------------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "database_cpu" {
   alarm_name          = "${var.project_name}-${var.environment}-db-cpu-high"
   comparison_operator = "GreaterThanThreshold"
@@ -167,9 +155,7 @@ resource "aws_cloudwatch_metric_alarm" "database_cpu" {
   tags = var.tags
 }
 
-# ----------------------------------------------------------------------------
 # Alarme CloudWatch - Connexions élevées
-# ----------------------------------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "database_connections" {
   alarm_name          = "${var.project_name}-${var.environment}-db-connections-high"
   comparison_operator = "GreaterThanThreshold"

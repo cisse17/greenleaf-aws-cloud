@@ -4,7 +4,7 @@
 **Projet :** GreenLeaf E-commerce Éco-responsable  
 **Date :** 08 Janvier 2026  
 **Analyste :** Bassirou, Valence, Ibrahima et Herby  
-**Version :** 1.0 (Révisée)  
+**Version :** 1.0  
 **Période d'Analyse :** Janvier 2026
 
 ---

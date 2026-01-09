@@ -1,10 +1,4 @@
-# ============================================================================
 # GREENLEAF E-COMMERCE - INFRASTRUCTURE AWS
-# ============================================================================
-# Description: Infrastructure complète pour héberger Magento Open Source
-# Auteurs: Équipe GreenLeaf
-# Date: Janvier 2025
-# ============================================================================
 
 terraform {
   required_version = ">= 1.5.0"
@@ -21,9 +15,7 @@ terraform {
   }
 }
 
-# ============================================================================
 # MODULE VPC - Réseau Virtuel
-# ============================================================================
 module "vpc" {
   source = "./modules/vpc"
   
@@ -37,9 +29,7 @@ module "vpc" {
   tags = var.common_tags
 }
 
-# ============================================================================
 # MODULE SECURITY - Security Groups
-# ============================================================================
 module "security" {
   source = "./modules/security"
   
@@ -47,15 +37,13 @@ module "security" {
   environment  = var.environment
   vpc_id       = module.vpc.vpc_id
   
-  # Autoriser votre IP pour l'accès SSH (à personnaliser)
+  # J'Autorise mon IP pour l'accès SSH (à personnaliser aprés)
   allowed_ssh_cidr = var.allowed_ssh_cidr
   
   tags = var.common_tags
 }
 
-# ============================================================================
 # MODULE DATABASE - RDS MySQL
-# ============================================================================
 module "database" {
   source = "./modules/database"
   
@@ -81,9 +69,7 @@ module "database" {
   tags = var.common_tags
 }
 
-# ============================================================================
 # MODULE STORAGE - S3 pour les médias Magento
-# ============================================================================
 module "storage" {
   source = "./modules/storage"
   
@@ -96,9 +82,7 @@ module "storage" {
   tags = var.common_tags
 }
 
-# ============================================================================
 # MODULE COMPUTE - EC2, Auto Scaling, ALB
-# ============================================================================
 module "compute" {
   source = "./modules/compute"
   
@@ -136,24 +120,27 @@ module "compute" {
 }
 
 
-# ============================================================================ 
-# MODULE CLOUDFRONT - CDN (Optionnel)
-# ============================================================================
-# module "cdn" {
-#   source = "./modules/cdn"
-#   count  = var.enable_cloudfront ? 1 : 0
-#   
-#   project_name       = var.project_name
-#   environment        = var.environment
-#   alb_dns_name       = module.compute.alb_dns_name
-#   s3_bucket_domain   = module.storage.s3_bucket_domain_name
-#   
-#   tags = var.common_tags
-# }
+# DATA SOURCES - AMI Ubuntu
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical (Ubuntu)
+  
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+  
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
 
-# ============================================================================ 
+
+
+
+# gerer au niveau de compute et database
 # MODULE MONITORING - CloudWatch
-# ============================================================================
 # module "monitoring" {
 #   source = "./modules/monitoring"
 #   
@@ -171,9 +158,7 @@ module "compute" {
 #   tags = var.common_tags
 # }
 
-# ============================================================================ 
 # GÉNÉRATION INVENTAIRE ANSIBLE
-# ============================================================================
 # resource "local_file" "ansible_inventory" {
 #   content = templatefile("${path.module}/templates/inventory.tpl", {
 #     alb_dns_name = module.compute.alb_dns_name
@@ -182,22 +167,3 @@ module "compute" {
 #   })
 #   filename = "${path.module}/../ansible/inventory/hosts"
 # }
-
-
-# ============================================================================
-# DATA SOURCES - AMI Ubuntu
-# ============================================================================
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical (Ubuntu)
-  
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-  
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}

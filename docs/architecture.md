@@ -1,4 +1,4 @@
-# 📐 Document d'Architecture Technique (DAT)
+#  Document d'Architecture Technique (DAT)
 ## Projet GreenLeaf - Plateforme E-commerce sur AWS
 
 **Projet :** GreenLeaf E-commerce Éco-responsable  
@@ -544,5 +544,5 @@ terraform apply -var-file="secrets.tfvars"
 
 ---
 
-**Document approuvé le :** 07 Janvier 2026  
-**Prochaine révision :** Après déploiement Ansible
+**Document approuvé le :** 07 Janvier 2026 par Bassirou 
+**Prochaine révision :** Après déploiement Ansible par l'équipe ansible

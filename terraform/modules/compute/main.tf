@@ -1,10 +1,6 @@
-# ============================================================================
 # MODULE COMPUTE - EC2, Auto Scaling, ALB
-# ============================================================================
 
-# ----------------------------------------------------------------------------
 # Application Load Balancer
-# ----------------------------------------------------------------------------
 resource "aws_lb" "main" {
   name_prefix        = substr("${var.project_name}-", 0, 6)
   internal           = false
@@ -24,9 +20,7 @@ resource "aws_lb" "main" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Target Group pour les instances EC2
-# ----------------------------------------------------------------------------
 resource "aws_lb_target_group" "magento" {
   name_prefix = substr("${var.project_name}-", 0, 6)
   port        = 80
@@ -63,9 +57,7 @@ resource "aws_lb_target_group" "magento" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Listener HTTP (port 80)
-# ----------------------------------------------------------------------------
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = 80
@@ -77,9 +69,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # User Data Script pour installation initiale
-# ----------------------------------------------------------------------------
 locals {
   user_data = <<-EOF
     #!/bin/bash
@@ -129,9 +119,7 @@ locals {
   EOF
 }
 
-# ----------------------------------------------------------------------------
 # Launch Template pour Auto Scaling
-# ----------------------------------------------------------------------------
 resource "aws_launch_template" "magento" {
   name_prefix   = "${var.project_name}-${var.environment}-"
   image_id      = var.ami_id
@@ -181,9 +169,7 @@ resource "aws_launch_template" "magento" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Auto Scaling Group
-# ----------------------------------------------------------------------------
 resource "aws_autoscaling_group" "magento" {
   name_prefix         = "${var.project_name}-${var.environment}-"
   min_size            = var.min_size
@@ -231,9 +217,7 @@ resource "aws_autoscaling_group" "magento" {
   }
 }
 
-# ----------------------------------------------------------------------------
 # Auto Scaling Policy - Scale UP (CPU élevé)
-# ----------------------------------------------------------------------------
 resource "aws_autoscaling_policy" "scale_up" {
   name                   = "${var.project_name}-${var.environment}-scale-up"
   autoscaling_group_name = aws_autoscaling_group.magento.name
@@ -261,9 +245,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
   alarm_actions     = [aws_autoscaling_policy.scale_up.arn]
 }
 
-# ----------------------------------------------------------------------------
 # Auto Scaling Policy - Scale DOWN (CPU faible)
-# ----------------------------------------------------------------------------
 resource "aws_autoscaling_policy" "scale_down" {
   name                   = "${var.project_name}-${var.environment}-scale-down"
   autoscaling_group_name = aws_autoscaling_group.magento.name

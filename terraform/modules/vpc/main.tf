@@ -1,10 +1,6 @@
-# ============================================================================
 # MODULE VPC - RÉSEAU VIRTUEL AWS
-# ============================================================================
 
-# ----------------------------------------------------------------------------
 # VPC Principal
-# ----------------------------------------------------------------------------
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -18,9 +14,7 @@ resource "aws_vpc" "main" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Internet Gateway
-# ----------------------------------------------------------------------------
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   
@@ -32,9 +26,7 @@ resource "aws_internet_gateway" "main" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Subnets Publics (pour ALB et NAT Gateway)
-# ----------------------------------------------------------------------------
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidrs)
   
@@ -52,9 +44,7 @@ resource "aws_subnet" "public" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Subnets Privés (pour EC2 et RDS)
-# ----------------------------------------------------------------------------
 resource "aws_subnet" "private" {
   count = length(var.private_subnet_cidrs)
   
@@ -71,9 +61,7 @@ resource "aws_subnet" "private" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Elastic IP pour NAT Gateway
-# ----------------------------------------------------------------------------
 resource "aws_eip" "nat" {
   count  = length(var.availability_zones)
   domain = "vpc"
@@ -88,9 +76,7 @@ resource "aws_eip" "nat" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# ----------------------------------------------------------------------------
 # NAT Gateway (pour accès Internet depuis subnets privés)
-# ----------------------------------------------------------------------------
 resource "aws_nat_gateway" "main" {
   count = length(var.availability_zones)
   
@@ -107,9 +93,7 @@ resource "aws_nat_gateway" "main" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# ----------------------------------------------------------------------------
 # Table de Routage Publique
-# ----------------------------------------------------------------------------
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   
@@ -126,9 +110,7 @@ resource "aws_route_table" "public" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Association Subnets Publics <-> Route Table Publique
-# ----------------------------------------------------------------------------
 resource "aws_route_table_association" "public" {
   count = length(var.public_subnet_cidrs)
   
@@ -136,9 +118,7 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# ----------------------------------------------------------------------------
 # Tables de Routage Privées (une par AZ)
-# ----------------------------------------------------------------------------
 resource "aws_route_table" "private" {
   count = length(var.availability_zones)
   
@@ -157,9 +137,7 @@ resource "aws_route_table" "private" {
   )
 }
 
-# ----------------------------------------------------------------------------
 # Association Subnets Privés <-> Route Tables Privées
-# ----------------------------------------------------------------------------
 resource "aws_route_table_association" "private" {
   count = length(var.private_subnet_cidrs)
   
