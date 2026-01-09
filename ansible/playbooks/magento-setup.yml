@@ -8,6 +8,18 @@
   become: yes
   gather_facts: yes
   
+  vars:
+    # Variables générales (non sensibles)
+    server_timezone: Europe/Paris
+    server_locale: fr_FR.UTF-8
+    project_name: greenleaf
+    magento_root: /var/www/magento
+    php_version: "8.3"
+    php_memory_limit: "2G"
+    php_max_execution_time: "1800"
+    php_upload_max_filesize: "64M"
+    nginx_user: www-data
+
   tasks:
     # ========================================================================
     # ÉTAPE 1 : PRÉPARATION DU SYSTÈME
@@ -564,3 +576,66 @@
           - "Test connexion : OK "
           - "=========================================="
       tags: mysql
+    # ========================================================================
+    # ÉTAPE 5 : INSTALLATION COMPOSER
+    # ========================================================================
+    
+    - name: 5.1 - Télécharger le script d'installation de Composer
+      get_url:
+        url: https://getcomposer.org/installer
+        dest: /tmp/composer-setup.php
+        mode: '0755'
+      tags: composer
+    
+    - name: 5.2 - Installer Composer globalement
+      command: php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer --version=2.7.1
+      args:
+        creates: /usr/local/bin/composer
+      tags: composer
+    
+    - name: 5.3 - Vérifier la version de Composer
+      command: composer --version --no-interaction
+      register: composer_version
+      changed_when: false
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: "1"
+      tags: composer
+    
+    - name: 5.4 - Afficher la version de Composer
+      debug:
+        msg: "{{ composer_version.stdout }}"
+      tags: composer
+    
+    - name: 5.5 - Configurer Composer pour Magento
+      command: composer config -g process-timeout 2000 --no-interaction
+      changed_when: false
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: "1"
+      tags: composer
+    
+    - name: 5.6 - Créer le répertoire .composer pour l'utilisateur www-data
+      file:
+        path: /var/www/.composer
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+      tags: composer
+    
+    - name: 5.7 - Nettoyer le fichier d'installation
+      file:
+        path: /tmp/composer-setup.php
+        state: absent
+      tags: composer
+    
+    - name: 5.8 - Message de succès ÉTAPE 5
+      debug:
+        msg:
+          - "=========================================="
+          - "ÉTAPE 5 COMPLÉTÉE AVEC SUCCÈS !"
+          - "=========================================="
+          - "Composer 2.7.1 installé"
+          - "Commande : composer --version"
+          - "Prêt pour installer Magento !"
+          - "=========================================="
+      tags: composer
