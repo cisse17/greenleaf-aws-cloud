@@ -1,0 +1,38 @@
+# --- Connexion ---
+# "ubuntu"
+ansible_user: ubuntu
+
+# --- Magento paths / permissions ---
+magento_user: magento
+magento_group: www-data
+magento_root: /var/www/magento
+
+# --- Nginx ---
+# plus tard : le domaine ou le DNS de l'ALB
+nginx_server_name: "localhost"
+
+# --- Base URL (placeholder en attendant que Terraform/ALB soit prêt) ---
+magento_base_url: "http://localhost/"
+
+# --- Base de données (placeholders, à remplacer quand Terraform donnera les infos) ---
+magento_db_host: "127.0.0.1"     # exemple local, à remplacer par endpoint RDS
+magento_db_name: "magento"
+magento_db_user: "magento"
+magento_db_password: "changeme"
+
+# (Optionnel) 
+db_host: "{{ magento_db_host }}"
+db_name: "{{ magento_db_name }}"
+db_user: "{{ magento_db_user }}"
+db_password: "{{ magento_db_password }}"
+
+# --- PHP (Ubuntu 24.04 => PHP 8.3) ---
+php_version: "8.3"
+php_memory_limit: "2G"
+php_upload_max_filesize: "64M"
+php_post_max_size: "64M"
+php_max_execution_time: "1800"
+
+# --- Magento install ---
+# On ne lance PAS setup:install tant que DB + URL ne sont pas OK
+do_magento_install: false

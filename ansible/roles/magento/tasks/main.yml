@@ -1,0 +1,56 @@
+---
+- name: Create magento user
+  user:
+    name: "{{ magento_user }}"
+    shell: /bin/bash
+    create_home: yes
+
+- name: Create Magento root directory
+  file:
+    path: "{{ magento_root }}"
+    state: directory
+    owner: "{{ magento_user }}"
+    group: "{{ magento_group }}"
+    mode: "2775"
+
+- name: Install composer
+  shell: |
+    set -e
+    if ! command -v composer >/dev/null 2>&1; then
+      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    fi
+  args:
+    creates: /usr/local/bin/composer
+
+
+- name: Placeholder file to confirm role ran
+  copy:
+    dest: "{{ magento_root }}/ANSIBLE_READY.txt"
+    content: "Magento directory prepared by Ansible.\n"
+    owner: "{{ magento_user }}"
+    group: "{{ magento_group }}"
+    mode: "0644"
+
+# Cette étape est volontairement désactivée pour l’instant :
+- name: (Optional) Run Magento setup:install (requires DB + URL)
+  shell: |
+    cd {{ magento_root }}
+    bin/magento setup:install \
+      --base-url={{ magento_base_url }} \
+      --db-host={{ db_host }} \
+      --db-name={{ db_name }} \
+      --db-user={{ db_user }} \
+      --db-password={{ db_password }} \
+      --admin-firstname=Admin \
+      --admin-lastname=Admin \
+      --admin-email=admin@example.com \
+      --admin-user=admin \
+      --admin-password='Admin12345!' \
+      --backend-frontname=admin \
+      --language=fr_FR \
+      --currency=EUR \
+      --timezone=Europe/Paris \
+      --use-rewrites=1
+  args:
+    executable: /bin/bash
+  when: do_magento_install | bool
